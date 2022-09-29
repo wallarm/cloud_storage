@@ -17,14 +17,6 @@ RSpec.describe CloudStorage::Objects::S3 do
     end
   end
 
-  describe '#url' do
-    subject(:url) { obj.url }
-
-    after { obj.delete! }
-
-    it { is_expected.to eq("#{ENV.fetch('S3_ENDPOINT')}/#{ENV.fetch('S3_BUCKET')}/test_1.txt") }
-  end
-
   describe '#delete!' do
     context 'when file exists' do
       it do

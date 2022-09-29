@@ -107,13 +107,6 @@ cli = CloudStorage::Client.new(
 => "http://wallarm-devtmp-ipfeeds-presigned-urls-research.s3:4569/Gemfile?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=...&X-Amz-Date=20210310T061122Z&X-Amz-Expires=10&X-Amz-SignedHeaders=host&X-Amz-Signature=..."
 ```
 
-### public url
-
-```ruby
-> cli.find('test.txt').url
-=> "https://storage.googleapis.com/some-bucket/test_1.txt"
-```
-
 ### Download
 
 ```ruby

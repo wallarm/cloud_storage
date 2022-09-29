@@ -17,8 +17,6 @@ module CloudStorage
         @internal.key
       end
 
-      alias name key
-
       def signed_url(**opts)
         signer = Aws::S3::Presigner.new(client: @client)
 
@@ -30,9 +28,7 @@ module CloudStorage
           response_content_type: opts[:content_type]
       end
 
-      def url
-        @internal.public_url
-      end
+      alias name key
 
       def delete!
         @resource.bucket(bucket_name).object(key).delete
