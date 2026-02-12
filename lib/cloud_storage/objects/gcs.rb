@@ -4,7 +4,7 @@ module CloudStorage
   module Objects
     class Gcs < Base
       def initialize(internal, uri:)
-        super internal
+        super(internal)
         @uri = uri
       end
 

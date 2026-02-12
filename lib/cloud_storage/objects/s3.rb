@@ -6,7 +6,7 @@ module CloudStorage
       attr_reader :bucket_name
 
       def initialize(internal, resource:, client:, bucket_name:)
-        super internal
+        super(internal)
 
         @bucket_name = bucket_name
         @resource = resource

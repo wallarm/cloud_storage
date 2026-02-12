@@ -45,7 +45,7 @@ module CloudStorage
       def exist?(key)
         resource.bucket(@bucket_name).object(key).exists?
       rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
-        Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+             Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
         false
       end
 
@@ -74,7 +74,7 @@ module CloudStorage
           resource: resource,
           client: client
       rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
-        Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+             Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
         raise ObjectNotFound, key
       end
 

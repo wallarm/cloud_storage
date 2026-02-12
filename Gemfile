@@ -11,3 +11,9 @@ gem 'rubocop-rspec', require: false
 
 gem 'aws-sdk-s3', require: false
 gem 'google-cloud-storage', require: false
+
+gem 'pry-byebug'
+gem 'rake'
+gem 'rspec'
+gem 'simplecov'
+gem 'webmock'

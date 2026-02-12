@@ -6,7 +6,8 @@ require_relative 'cloud_storage/wrappers/base'
 require_relative 'cloud_storage/objects/base'
 
 module CloudStorage
-  ObjectNotFound = Class.new(StandardError)
+  class ObjectNotFound < StandardError
+  end
 
   class << self
     def register_wrapper(klass)
