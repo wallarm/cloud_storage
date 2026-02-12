@@ -1,5 +1,5 @@
 ARG DOCKER_RUBY_VERSION
-FROM ruby:${DOCKER_RUBY_VERSION}-alpine
+FROM ruby:${DOCKER_RUBY_VERSION:-3.4}-alpine
 
 RUN gem update --system
 RUN apk add --update --no-cache less git build-base curl mc htop

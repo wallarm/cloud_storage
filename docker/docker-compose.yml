@@ -40,5 +40,5 @@ services:
 
 volumes:
   bundler-data:
-    external:
-      name: bundler_data
+    name: bundler_data
+    external: true
