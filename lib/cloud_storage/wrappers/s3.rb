@@ -34,7 +34,7 @@ module CloudStorage
               resource: @resource,
               client: @client
           end
-        rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+        rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
         end
       end
 
@@ -44,6 +44,9 @@ module CloudStorage
 
       def exist?(key)
         resource.bucket(@bucket_name).object(key).exists?
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
+        Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+        false
       end
 
       def upload_file(key:, file:, **opts)
@@ -56,7 +59,7 @@ module CloudStorage
           bucket_name: @bucket_name,
           resource: resource,
           client: client
-      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
         raise ObjectNotFound, @bucket_name
       end
 
@@ -70,6 +73,9 @@ module CloudStorage
           bucket_name: @bucket_name,
           resource: resource,
           client: client
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
+        Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+        raise ObjectNotFound, key
       end
 
       def delete_files(keys)
@@ -80,7 +86,7 @@ module CloudStorage
               objects: keys.map { |key| { key: key } },
               quiet: true
             }
-      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
       end
 
       private
