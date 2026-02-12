@@ -1,7 +1,7 @@
 version: '2'
 
 environment:
-  DOCKER_RUBY_VERSION: 3.0
+  DOCKER_RUBY_VERSION: 3.4
   S3_ENDPOINT: http://s3:9000
   S3_BUCKET: wallarm-devtmp-ipfeeds-presigned-urls-research
   GCS_ENDPOINT: http://gcs:8080/
@@ -26,7 +26,6 @@ interaction:
 
   rspec:
     service: app
-    environment:
     command: bundle exec rspec
 
   rubocop:

@@ -34,7 +34,7 @@ module CloudStorage
               resource: @resource,
               client: @client
           end
-        rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+        rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
         end
       end
 
@@ -44,19 +44,22 @@ module CloudStorage
 
       def exist?(key)
         resource.bucket(@bucket_name).object(key).exists?
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
+             Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+        false
       end
 
       def upload_file(key:, file:, **opts)
-        obj = resource.bucket(@bucket_name).object(key)
+        return unless upload_file_or_io(key, file, **opts)
 
-        return unless upload_file_or_io(obj, file, **opts)
+        obj = resource.bucket(@bucket_name).object(key)
 
         Objects::S3.new \
           obj,
           bucket_name: @bucket_name,
           resource: resource,
           client: client
-      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
         raise ObjectNotFound, @bucket_name
       end
 
@@ -70,6 +73,9 @@ module CloudStorage
           bucket_name: @bucket_name,
           resource: resource,
           client: client
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound,
+             Aws::S3::Errors::InvalidBucketName, Aws::S3::Errors::BadRequest
+        raise ObjectNotFound, key
       end
 
       def delete_files(keys)
@@ -80,7 +86,7 @@ module CloudStorage
               objects: keys.map { |key| { key: key } },
               quiet: true
             }
-      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound
+      rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
       end
 
       private
@@ -93,12 +99,18 @@ module CloudStorage
         @resource ||= Aws::S3::Resource.new(@options)
       end
 
-      def upload_file_or_io(obj, file_or_io, **opts)
+      def upload_file_or_io(key, file_or_io, **opts)
         if file_or_io.respond_to?(:path)
-          obj.upload_file(file_or_io.path, **opts)
+          transfer_manager.upload_file(file_or_io.path, bucket: @bucket_name, key: key, **opts)
         else
-          obj.upload_stream(**opts) { |write_stream| IO.copy_stream(file_or_io, write_stream) }
+          transfer_manager.upload_stream(bucket: @bucket_name, key: key, **opts) do |write_stream|
+            IO.copy_stream(file_or_io, write_stream)
+          end
         end
+      end
+
+      def transfer_manager
+        @transfer_manager ||= Aws::S3::TransferManager.new(client: client)
       end
     end
   end

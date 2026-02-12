@@ -6,8 +6,8 @@ require 'cloud_storage'
 require 'cloud_storage/wrappers/gcs'
 require 'cloud_storage/wrappers/s3'
 
-require_relative './spec/rspec_helpers/gcs'
-require_relative './spec/rspec_helpers/s3'
+require_relative 'spec/rspec_helpers/gcs'
+require_relative 'spec/rspec_helpers/s3'
 
 # rubocop:disable Style/MixinUsage
 include RSpecHelpers::Gcs

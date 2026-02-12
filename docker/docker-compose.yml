@@ -24,7 +24,7 @@ services:
       - gcs
 
   s3:
-    image: minio/minio:edge
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
     volumes:
       - ../uploads/s3:/data
     command: server /data --json
@@ -40,5 +40,5 @@ services:
 
 volumes:
   bundler-data:
-    external:
-      name: bundler_data
+    name: bundler_data
+    external: true

@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  pull_request:
+    branches: ['*']
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby-version: ['3.0', '3.1', '3.4', '4.0']
+
+    env:
+      S3_ENDPOINT: http://localhost:9000
+      S3_BUCKET: test
+      GCS_ENDPOINT: http://localhost:8080/
+      GCS_BUCKET: some-bucket
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 \
+            --entrypoint sh \
+            minio/minio:RELEASE.2025-04-22T22-12-26Z \
+            -c 'mkdir -p /data/test && minio server /data --json'
+
+      - name: Start fake-gcs-server
+        run: |
+          docker run -d --name gcs \
+            -p 8080:8080 \
+            --entrypoint sh \
+            fsouza/fake-gcs-server \
+            -c 'mkdir -p /data/some-bucket && /bin/fake-gcs-server -port 8080 -scheme http -external-url=http://localhost:8080 -public-host=localhost:8080 -filesystem-root /data'
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:9000/minio/health/live && curl -sf http://localhost:8080/ && break
+            sleep 1
+          done
+
+      - name: Set up Ruby ${{ matrix.ruby-version }}
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{ matrix.ruby-version }}
+          bundler-cache: true
+
+      - name: Rubocop
+        run: bundle exec rubocop --display-style-guide --extra-details
+
+      - name: RSpec
+        run: bundle exec rspec
