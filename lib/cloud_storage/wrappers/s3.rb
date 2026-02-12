@@ -99,10 +99,6 @@ module CloudStorage
         @resource ||= Aws::S3::Resource.new(@options)
       end
 
-      def transfer_manager
-        @transfer_manager ||= Aws::S3::TransferManager.new(client: client)
-      end
-
       def upload_file_or_io(key, file_or_io, **opts)
         if file_or_io.respond_to?(:path)
           transfer_manager.upload_file(file_or_io.path, bucket: @bucket_name, key: key, **opts)
@@ -111,6 +107,10 @@ module CloudStorage
             IO.copy_stream(file_or_io, write_stream)
           end
         end
+      end
+
+      def transfer_manager
+        @transfer_manager ||= Aws::S3::TransferManager.new(client: client)
       end
     end
   end
