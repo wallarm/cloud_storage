@@ -24,17 +24,36 @@ module CloudStorage
           @opts = opts
         end
 
-        def each
+        def each # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength
           return to_enum unless block_given?
 
-          @client.list_objects(bucket: @bucket_name, **@opts).contents.each do |item|
-            yield Objects::S3.new \
-              item,
-              bucket_name: @bucket_name,
-              resource: @resource,
-              client: @client
+          counter = 0
+          limit_exceeded = false
+
+          @client.list_objects_v2(bucket: @bucket_name, **@opts).each do |page|
+            page.contents.each do |item|
+              yield build_object(item)
+              next unless @opts[:max_keys]
+
+              counter += 1
+
+              limit_exceeded = counter >= @opts[:max_keys]
+              break if limit_exceeded
+            end
+
+            break if limit_exceeded
           end
         rescue Aws::S3::Errors::NoSuchBucket, Aws::S3::Errors::NotFound, Aws::S3::Errors::InvalidBucketName
+        end
+
+        private
+
+        def build_object(item)
+          Objects::S3.new \
+            item,
+            bucket_name: @bucket_name,
+            resource: @resource,
+            client: @client
         end
       end
 
@@ -101,16 +120,12 @@ module CloudStorage
 
       def upload_file_or_io(key, file_or_io, **opts)
         if file_or_io.respond_to?(:path)
-          transfer_manager.upload_file(file_or_io.path, bucket: @bucket_name, key: key, **opts)
+          Aws::S3::TransferManager.new(client: client).upload_file \
+            file_or_io.path, bucket: @bucket_name, key: key, **opts
         else
-          transfer_manager.upload_stream(bucket: @bucket_name, key: key, **opts) do |write_stream|
-            IO.copy_stream(file_or_io, write_stream)
-          end
+          client.put_object \
+            bucket: @bucket_name, key: key, body: file_or_io, **opts
         end
-      end
-
-      def transfer_manager
-        @transfer_manager ||= Aws::S3::TransferManager.new(client: client)
       end
     end
   end
