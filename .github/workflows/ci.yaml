@@ -22,13 +22,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start MinIO
+      - name: Start SeaweedFS
         run: |
-          docker run -d --name minio \
+          docker run -d --name seaweedfs \
             -p 9000:9000 \
-            --entrypoint sh \
-            minio/minio:RELEASE.2025-04-22T22-12-26Z \
-            -c 'mkdir -p /data/test && minio server /data --json'
+            -e AWS_ACCESS_KEY_ID=minioadmin \
+            -e AWS_SECRET_ACCESS_KEY=minioadmin \
+            docker.io/chrislusf/seaweedfs:4.48 \
+            mini -dir=/data -webdav=false -admin.ui=false \
+              -s3.port=9000 -s3.port.iceberg=0 -s3.port.lance=0 -s3.autoCreateBucket=false \
+              -bucket=test
 
       - name: Start fake-gcs-server
         run: |
@@ -41,9 +44,12 @@ jobs:
       - name: Wait for services
         run: |
           for i in $(seq 1 30); do
-            curl -sf http://localhost:9000/minio/health/live && curl -sf http://localhost:8080/ && break
+            curl -sfI --aws-sigv4 aws:amz:us-east-1:s3 --user minioadmin:minioadmin http://localhost:9000/test \
+              && curl -sf "http://localhost:8080/storage/v1/b/$GCS_BUCKET" >/dev/null && exit 0
             sleep 1
           done
+          echo "SeaweedFS or fake-gcs-server did not become ready" >&2
+          exit 1
 
       - name: Set up Ruby ${{ matrix.ruby-version }}
         uses: ruby/setup-ruby@v1

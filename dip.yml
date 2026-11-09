@@ -34,7 +34,6 @@ interaction:
 
 provision:
   - ./docker/prepare_env.sh
-  - mkdir -p uploads/s3/$S3_BUCKET
   - rm -rf uploads/gcs/$GCS_BUCKET
   - rm -rf Gemfile.lock
   - mkdir -p uploads/gcs/$GCS_BUCKET

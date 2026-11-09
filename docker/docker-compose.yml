@@ -20,14 +20,23 @@ services:
       - bundler-data:/bundle
     command: sh
     depends_on:
-      - s3
-      - gcs
+      s3:
+        condition: service_healthy
+      gcs:
+        condition: service_started
 
   s3:
-    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
-    volumes:
-      - ../uploads/s3:/data
-    command: server /data --json
+    image: docker.io/chrislusf/seaweedfs:4.48
+    command: ["mini", "-dir=/data", "-webdav=false", "-admin.ui=false",
+              "-s3.port=9000", "-s3.port.iceberg=0", "-s3.port.lance=0", "-s3.autoCreateBucket=false",
+              "-bucket=${S3_BUCKET}"]
+    environment:
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+    healthcheck:
+      test: ["CMD-SHELL", "for b in ${S3_BUCKET}; do curl -sfI --aws-sigv4 aws:amz:us-east-1:s3 --user \"$$AWS_ACCESS_KEY_ID:$$AWS_SECRET_ACCESS_KEY\" http://localhost:9000/$$b || exit 1; done"]
+      interval: 1s
+      retries: 30
 
   gcs:
     image: fsouza/fake-gcs-server

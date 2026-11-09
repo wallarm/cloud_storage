@@ -135,6 +135,14 @@ RSpec.describe CloudStorage::Wrappers::S3 do
 
       it { expect(cli.exist?('file.txt')).to be(false) }
     end
+
+    # Servers differ on an invalid bucket name (400 on AWS and MinIO, 404 on
+    # SeaweedFS), so the error branch is driven by a stubbed client.
+    context 'when S3 rejects the request' do
+      let(:cli) { described_class.new(bucket: 'invalid_bucket', stub_responses: { head_object: 'BadRequest' }) }
+
+      it { expect(cli.exist?('file.txt')).to be(false) }
+    end
   end
 
   describe '#find' do
@@ -163,6 +171,16 @@ RSpec.describe CloudStorage::Wrappers::S3 do
 
     context 'when invalid bucket' do
       let(:cli) { cli_invalid_bucket }
+
+      it do
+        expect { cli.find('test6.txt') }.to raise_error(CloudStorage::ObjectNotFound, /test6.txt/)
+      end
+    end
+
+    # Servers differ on an invalid bucket name (400 on AWS and MinIO, 404 on
+    # SeaweedFS), so the error branch is driven by a stubbed client.
+    context 'when S3 rejects the request' do
+      let(:cli) { described_class.new(bucket: 'invalid_bucket', stub_responses: { head_object: 'BadRequest' }) }
 
       it do
         expect { cli.find('test6.txt') }.to raise_error(CloudStorage::ObjectNotFound, /test6.txt/)
